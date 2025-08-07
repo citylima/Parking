@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Find Nearest Parking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    .parking {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    .map-btn {
+      background-color: #4285F4;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Nearest Parking Finder</h2>
+  <p>Click the button to find the 3 nearest parking locations from your current location.</p>
+  <button onclick="findNearest()">Find Nearest Parking</button>
+
+  <div id="results"></div>
+
+  <script>
+    // Demo parking locations with name, address, lat, long
+    const parkingPlaces = [
+      { name: "Parking A", address: "Main Road, City Center", lat: 8.5241, lon: 76.9366 },
+      { name: "Parking B", address: "North Avenue", lat: 8.5300, lon: 76.9400 },
+      { name: "Parking C", address: "East Street", lat: 8.5200, lon: 76.9500 },
+      { name: "Parking D", address: "West End", lat: 8.5100, lon: 76.9300 },
+      { name: "Parking E", address: "Hill View Road", lat: 8.5400, lon: 76.9200 }
+    ];
+
+    // Haversine formula to calculate distance between two coordinates
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Radius of Earth in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function findNearest() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
+
+          // Calculate distances to each parking spot
+          parkingPlaces.forEach(p => {
+            p.distance = getDistance(userLat, userLon, p.lat, p.lon);
+          });
+
+          // Sort by distance and pick top 3
+          const nearest = parkingPlaces.sort((a, b) => a.distance - b.distance).slice(0, 3);
+
+          // Display results
+          const resultDiv = document.getElementById("results");
+          resultDiv.innerHTML = "<h3>Nearest Parking Locations:</h3>";
+          nearest.forEach(p => {
+            const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`;
+            resultDiv.innerHTML += `
+              <div class="parking">
+                <strong>${p.name}</strong><br>
+                ${p.address}<br>
+                Distance: ${p.distance.toFixed(2)} km<br>
+                <a href="${mapLink}" target="_blank">
+                  <button class="map-btn">Open in Google Maps</button>
+                </a>
+              </div>
+            `;
+          });
+        }, function(error) {
+          alert("Location access denied or unavailable.");
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+  </script>
+</body>
+</html>
